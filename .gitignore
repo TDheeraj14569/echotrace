@@ -1,0 +1,9 @@
+# Build artifacts
+build/
+bin/
+obj/
+
+# Generated reports
+*.html
+*.csv
+*.json
