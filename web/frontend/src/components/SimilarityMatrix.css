@@ -1,0 +1,82 @@
+.similarity-matrix-container {
+  margin-top: 1rem;
+  overflow: auto;
+  max-height: 400px;
+}
+
+.matrix-wrapper {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.matrix {
+  display: flex;
+  flex-direction: column;
+}
+
+.matrix-row {
+  display: flex;
+}
+
+.matrix-cell {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.matrix-cell.empty {
+  width: 120px;
+  border: none;
+}
+
+.header-col, .row-label {
+  background-color: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-col {
+  border-top: none;
+}
+
+.header-col span {
+  transform: rotate(-45deg);
+  display: block;
+}
+
+.row-label {
+  width: 120px;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
+  border-left: none;
+}
+
+.data-cell {
+  color: white;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.data-cell:hover {
+  transform: scale(1.1);
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+.sim-matrix td:not(.row-header) {
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+.sim-matrix td:not(.row-header):hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 10; position: relative;
+}

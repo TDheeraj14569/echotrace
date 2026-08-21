@@ -3,6 +3,7 @@
 #include "echotrace/similarity.hpp"
 #include "echotrace/text.hpp"
 #include "echotrace/thread_pool.hpp"
+#include "echotrace/indexing.hpp"
 
 #include <algorithm>
 #include <future>
@@ -100,6 +101,62 @@ std::vector<Match> compare_all(const std::vector<ParsedSource>& sources,
     return matches;
 }
 
+std::vector<Match> compare_indexed(
+    const std::vector<ParsedSource>& sources,
+    std::size_t threads,
+    std::size_t min_shared)
+{
+    std::vector<Match> matches;
+    if (sources.size() < 2) {
+        return matches;
+    }
+
+    auto index = indexing::build_index(sources);
+    auto pairs = indexing::candidate_pairs(index, min_shared);
+
+    if (pairs.empty()) {
+        return matches;
+    }
+
+    const std::size_t total = pairs.size();
+    matches.resize(total);
+    const std::size_t workers = resolve_threads(threads);
+
+    if (workers == 1 || total <= 1)
+    {
+        for (std::size_t t = 0; t < total; ++t)
+        {
+            const auto [i, j] = pairs[t];
+            const auto d = sim::jaccard_detail(sources[i].fingerprint, sources[j].fingerprint);
+            matches[t] = Match{i, j, d.percent, d.intersection};
+        }
+        return matches;
+    }
+
+    ThreadPool pool(workers);
+    std::vector<std::future<void>> futures;
+    futures.reserve(total);
+
+    for (std::size_t t = 0; t < total; ++t)
+    {
+        const auto i = pairs[t].first;
+        const auto j = pairs[t].second;
+        futures.push_back(pool.submit(
+            [&sources, &matches, t, i, j]()
+            {
+                const auto d = sim::jaccard_detail(sources[i].fingerprint, sources[j].fingerprint);
+                matches[t] = Match{i, j, d.percent, d.intersection};
+            }));
+    }
+
+    for (auto& f : futures)
+    {
+        f.get();
+    }
+
+    return matches;
+}
+
 AnalysisResult analyze(std::vector<ParsedSource> sources,
                        const AnalysisOptions& options)
 {
@@ -115,7 +172,12 @@ AnalysisResult analyze(std::vector<ParsedSource> sources,
     }
 
     // Run the (optionally parallel) comparison stage.
-    auto all = compare_all(srcs, options.threads);
+    std::vector<Match> all;
+    if (options.mode == ComparisonMode::Indexed) {
+        all = compare_indexed(srcs, options.threads, options.min_shared_for_candidate);
+    } else {
+        all = compare_all(srcs, options.threads);
+    }
 
     // Summary reflects the FULL distribution, before filtering.
     result.summary.files = srcs.size();
@@ -202,7 +264,7 @@ AnalysisResult analyze_directory(const std::string& root,
 
     if (sources.empty())
     {
-        throw std::runtime_error("no parsable C++ source files found under '" + root + "'");
+        throw std::runtime_error("no parsable source files found under '" + root + "'");
     }
 
     auto result = analyze(std::move(sources), options);

@@ -1,175 +1,203 @@
 # EchoTrace
 
-A high-performance, localized code similarity detector written in standard C++20.
+**Source-code similarity detection engine for academic integrity and code auditing.**
 
-EchoTrace implements the **Winnowing algorithm** — the same class of algorithm behind tools like Stanford's MOSS — to detect structural cloning and plagiarism across C++ source trees. By comparing normalized token streams rather than raw text, it detects copied logic even when identifiers, literals, comments, and formatting have all been changed.
+EchoTrace analyzes collections of source code files to detect similarity using document fingerprinting — the same algorithmic family used by MOSS (Stanford) and JPlag. It tokenizes, normalizes, hashes, and fingerprints source files, then computes Jaccard similarity across all pairs.
 
-This started as a single-file prototype (`Moss-Lite`) and has since been rebuilt from the ground up as a proper library + CLI: a real `src/`/`include/` split, a multithreaded comparison engine, whole-directory batch analysis, and four report formats.
+## Supported Languages
 
-## Technical Highlights
+| Language | Extensions | Status |
+|----------|-----------|--------|
+| C/C++ | `.c` `.h` `.cpp` `.cc` `.cxx` `.hpp` | ✅ Full support |
+| Python | `.py` `.pyw` | ✅ Full support |
+| Java | `.java` | ✅ Full support |
+| JavaScript/TypeScript | `.js` `.jsx` `.ts` `.tsx` | ✅ Full support |
 
-- **Zero-Copy Parsing** — the lexer runs entirely on `std::string_view` / byte offsets, so tokenizing a file allocates no intermediate substrings. Each token retains its original source span, which is what makes matched-fragment highlighting possible later in the pipeline.
+## How It Works
 
-- **Semantic Tokenization** — identifiers collapse to a generic `V` symbol, types to `T`, numeric literals to `N`, and string/char literals to `L`. Keywords and operators are preserved verbatim because they carry the structural meaning the detector actually relies on. Two files that differ only in identifier spelling, literal values, and layout produce identical token streams.
-
-- **Safe, Provable Normalization** — a second pass collapses redundant nested parentheses (`((E))` → `(E)`). Every included transform is *guaranteed* semantics-preserving; anything with an edge case (`a += b` vs `a = a + b`, `++x` vs `x += 1`, folding `while(0)`) is deliberately left out rather than risked.
-
-- **O(N) Fingerprinting** — the winnowing sliding window is implemented with a monotonic `std::deque`, so local-minimum hash selection is O(N) total, not the O(N × W) of a naive sliding-window scan.
-
-- **Parallel Pairwise Comparison** — directory mode compares every file pair (N×(N−1)/2 comparisons) across a hand-rolled thread pool. Each worker task owns a pre-assigned output slot, so there's no locking on the hot path and results are byte-identical regardless of thread scheduling.
-
-- **Matched-Fragment Retrieval** — beyond a single similarity percentage, EchoTrace can recover the actual shared k-gram spans between two files (original source offsets, both sides), for reports that show *where* two files overlap, not just *how much*.
-
-- **Dependency-Free** — standard library only. No external packages, no CMake — a single `Makefile` builds everything.
-
-## The Pipeline
-
-```text
-Source File
-     |
-     v
-Lexer  ──────────────► normalizes to V / T / N / L symbols, discards comments & whitespace
-     |
-     v
-Token Stream
-     |
-     v
-Redundant-Paren Pass ─► provably safe token-level cleanup
-     |
-     v
-K-Grams  ────────────► overlapping windows of size k
-     |
-     v
-Rolling Hashes ──────► polynomial rolling hash, O(1) amortized per window
-     |
-     v
-Winnowing ───────────► sliding window of size w selects local-minimum hashes
-     |
-     v
-Fingerprint  (a hash set per file)
-     |
-     v
-Jaccard Similarity ──► pairwise, optionally multithreaded across the whole corpus
-     |
-     v
-Ranked Report  (text / csv / json / html)
+```
+Source files
+    │
+    ▼
+┌─────────────┐   Language-specific tokenization:
+│   Lexer     │   identifiers → V, types → T, numbers → N, strings → L
+└──────┬──────┘   keywords preserved verbatim, comments/whitespace stripped
+       │
+       ▼
+┌─────────────┐   Redundant parentheses collapsed:
+│ Normalizer  │   ((x)) → (x)
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐   Polynomial rolling hash (base=256, mod=10^9+7)
+│   Hasher    │   over k-grams of token symbols
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐   Winnowing algorithm: selects minimum hash
+│ Fingerprint │   in each sliding window → robust, position-independent
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐   Jaccard similarity: |A ∩ B| / |A ∪ B|
+│ Comparator  │   over fingerprint sets, parallel via thread pool
+└──────┬──────┘
+       │
+       ▼
+  Report (Text, CSV, JSON, HTML)
 ```
 
-## Project Structure
-
-```text
-echotrace/
-├── Makefile
-├── include/echotrace/
-│   ├── lexer.hpp          # tokenizer: source -> normalized token stream
-│   ├── normalization.hpp  # provably-safe token-level cleanup passes
-│   ├── hash.hpp            # k-gram rolling hash
-│   ├── fingerprint.hpp     # winnowing selection
-│   ├── similarity.hpp      # Jaccard comparison
-│   ├── fragments.hpp       # shared k-gram -> source span recovery
-│   ├── document.hpp        # ParsedSource: a file's full pipeline output
-│   ├── fs_traversal.hpp    # recursive source discovery
-│   ├── analysis.hpp        # N-file pairwise engine, thresholds, top-N
-│   ├── reporting.hpp       # text / csv / json / html renderers
-│   ├── thread_pool.hpp     # fixed-size worker pool used by analysis
-│   └── version.hpp
-└── src/
-    ├── cli/main.cpp        # argument parsing, two modes, self-test
-    └── *.cpp               # implementations matching each header above
-```
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
+- **C++20 compiler**: GCC 13+, Clang 16+, or MSVC 19.35+
+- **Node.js 18+** (for web interface)
+- **Make** or **CMake** (for building)
 
-A C++20 compiler (GCC or Clang) and `make`. No other dependencies.
-
-### Building
+### Build the Engine
 
 ```bash
-make            # builds ./build/bin/echotrace
+# Linux / macOS
+make cli
+
+# Windows (PowerShell)
+.\build.ps1 cli
 ```
 
-Other targets:
+### Run from Command Line
 
 ```bash
-make lib        # static library only (libechotrace.a)
-make clean      # remove all build output
-```
+# Compare all files in a directory
+./build/bin/echotrace ./submissions/ --format text
 
-The build compiles under `-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion` with zero warnings.
+# Compare two specific files
+./build/bin/echotrace fileA.cpp fileB.cpp
 
-### Verification
+# With custom parameters
+./build/bin/echotrace ./code/ --k 7 --window 5 --threshold 30 --format html -o report.html
 
-Run the built-in fingerprint self-check (exact clone, identifier-renamed clone, and unrelated file — verifies expected similarity in each case):
-
-```bash
+# Run self-test
 ./build/bin/echotrace --self-test
 ```
 
-### Usage
+### CLI Options
 
-**Directory mode** — recursively discover every `.cpp/.cc/.cxx/.h/.hpp` file under a root and compute a full pairwise similarity matrix:
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--format` | `text` | Output format: `text`, `csv`, `json`, `html` |
+| `--k` | `5` | K-gram size for hashing |
+| `--window` | `4` | Winnowing window size |
+| `--threshold` | `0` | Minimum similarity % to report |
+| `--threads` | `auto` | Worker threads (0 = auto-detect) |
+| `--top` | `0` | Show only top-N matches |
+| `-o` | stdout | Output file path |
+
+### Run Unit Tests
 
 ```bash
-./build/bin/echotrace ./submissions
+make test          # Linux/macOS
+.\build.ps1 tests  # Windows
 ```
 
-**Two-file mode** — compare exactly two files directly:
+### Run Benchmarks
 
 ```bash
-./build/bin/echotrace fileA.cpp fileB.cpp
+make bench
 ```
 
-### Options
+## Web Interface
 
-```text
-Analysis options:
-  -k, --k N                    token k-gram size (default 5)
-  -w, --w N                    winnowing window size (default 4)
-  -j, --threads N               comparison worker threads (default: auto)
-  --threshold PCT, --min PCT    minimum similarity to report (default 0)
-  --top N                       keep only the top N matches (default: all)
-  --no-normalize                disable redundant-paren normalization
+EchoTrace includes a full web application for browser-based analysis.
 
-Output options:
-  --format text|csv|json|html   report format (default: text; directory mode only)
-  -o, --output FILE             write report to FILE instead of stdout
+### Setup
+
+```bash
+# Install backend dependencies
+cd web/backend && npm install
+
+# Install frontend dependencies
+cd web/frontend && npm install
+
+# Start backend (port 3001)
+cd web/backend && npm start
+
+# Start frontend dev server (port 5173)
+cd web/frontend && npm run dev
 ```
 
-- **k (k-gram size)** — the noise threshold. Larger values ignore smaller copied snippets.
-- **w (window size)** — the gap tolerance between selected fingerprints; also bounds how sparse the fingerprint set is.
+### API Endpoints
 
-### Example Output (directory mode)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/upload` | Upload source files |
+| `POST` | `/api/analysis/:id/start` | Start analysis |
+| `GET` | `/api/analysis/:id/status` | Check progress |
+| `GET` | `/api/results/:id` | Get results |
+| `GET` | `/api/results` | List all jobs |
+| `DELETE` | `/api/results/:id` | Delete a job |
+| `GET` | `/api/health` | Health check |
 
-```text
-EchoTrace Analysis Report
-=========================
+### Docker
 
-Root:            ./submissions
-Files:                  24
-Comparisons:            276
-Highest similarity:     100.00%
-Average similarity:     6.42%
-Matches (>= 0.00%):     276
-
-Ranked Matches
---------------
-rank  similarity   file_a          file_b          shared
-   1     100.00%   alice/main.cpp  bob/main.cpp        21
-   2      41.30%   carol/sort.cpp  dave/sort.cpp        9
+```bash
+docker-compose up --build
+# Access at http://localhost:3001
 ```
 
-`--format json` and `--format html` produce the same result as structured data or a self-contained report page, for feeding into a grading pipeline or opening directly in a browser.
+## Architecture
 
-## Future Roadmap
+```
+echotrace/
+├── include/echotrace/     # Public headers
+│   ├── lexer.hpp          # C++ tokenizer
+│   ├── language.hpp       # Language detection
+│   ├── language_lexer.hpp # Abstract lexer interface
+│   ├── normalization.hpp  # Token normalization
+│   ├── hash.hpp           # Rolling hash (FNV-1a + polynomial)
+│   ├── fingerprint.hpp    # Winnowing algorithm
+│   ├── document.hpp       # ParsedSource aggregate type
+│   ├── similarity.hpp     # Jaccard similarity
+│   ├── fragments.hpp      # Matched fragment extraction
+│   ├── analysis.hpp       # Multi-file analysis pipeline
+│   ├── indexing.hpp       # Inverted fingerprint index
+│   ├── reporting.hpp      # Report rendering
+│   └── thread_pool.hpp    # Header-only thread pool
+├── src/                   # Implementations
+│   ├── languages/         # Multi-language lexers
+│   │   ├── cpp_lexer.cpp
+│   │   ├── python_lexer.cpp
+│   │   ├── java_lexer.cpp
+│   │   └── javascript_lexer.cpp
+│   └── cli/main.cpp       # CLI entry point
+├── tests/                 # Unit tests (87 tests)
+├── bench/                 # Benchmark harness
+├── web/
+│   ├── backend/           # Express REST API
+│   └── frontend/          # React + TypeScript UI
+├── Makefile               # GNU Make build
+├── build.ps1              # Windows PowerShell build
+├── Dockerfile             # Multi-stage Docker build
+└── docker-compose.yml     # Docker Compose
+```
 
-- **Containment Metric** — a containment score alongside Jaccard, for cases where a small snippet is copied into a much larger file (Jaccard under-weights this case by design).
-- **Preprocessor-Aware Lexing** — teach the lexer to strip `#include`/`#define` directives so shared boilerplate doesn't inflate similarity between otherwise-unrelated files.
-- **HTML Diff View** — render matched-fragment spans (already computed by the fragments module) as an inline side-by-side diff in the HTML report, rather than just listing similarity numbers.
+### Key Design Decisions
 
-## Limitations
+- **C++ engine stays the computational core.** The web backend invokes the CLI as a subprocess — no FFI complexity.
+- **Same-language comparison only.** Cross-language similarity (e.g., C++ vs Python) is not meaningful with token-level fingerprinting.
+- **O(N·candidates) via inverted index.** For large file sets, the indexed comparison mode (`ComparisonMode::Indexed`) prunes pairs that share no fingerprints, avoiding O(N²) comparisons.
+- **Lock-free parallel comparison.** Each thread writes to its own pre-assigned result slot — no mutexes needed.
 
-- Token-based analysis detects structural/lexical cloning, not deeper semantic plagiarism (e.g. an algorithm rewritten with a genuinely different control-flow shape).
-- Heavily templated or generated code can inflate similarity scores, since generated boilerplate tokenizes identically across files.
-- Two-file mode is intentionally minimal and does not support the `--format`/`--output` report renderers — use directory mode (even for two files, if you want CSV/JSON/HTML output).
+## Performance
+
+Benchmarks on a modern desktop (AMD Ryzen, single-threaded unless noted):
+
+| Files | Lines/File | Tokens | Pairs | Time |
+|-------|-----------|--------|-------|------|
+| 10 | 50 | 4,855 | 45 | 2.7ms |
+| 50 | 100 | 51,820 | 1,225 | 19ms |
+| 100 | 100 | 102,723 | 4,950 | 38ms |
+| 200 | 50 | 101,791 | 19,900 | 81ms (4T) |
+
+## License
+
+MIT — Copyright 2026 Thota Dheerajeswar

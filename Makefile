@@ -25,7 +25,7 @@ OBJDIR    := $(BUILD)/obj
 TESTDIR   := $(BUILD)/tests
 
 # Parallel-safe: every .cpp is compiled independently.
-LIB_SRCS  := $(wildcard src/*.cpp)
+LIB_SRCS  := $(wildcard src/*.cpp) $(wildcard src/languages/*.cpp)
 LIB_OBJS  := $(patsubst src/%.cpp,$(OBJDIR)/%.o,$(LIB_SRCS))
 LIB       := $(BUILD)/lib$(PROJECT).a
 
@@ -56,7 +56,7 @@ cli: $(CLI_BIN)
 
 $(CLI_BIN): $(CLI_OBJ) $(LIB) | $(BINDIR)
 	@echo "[LINK]    $@"
-	@$(CXX) $(CXXSTD) $(OPT) $< -L$(BUILD) -l$(PROJECT) -lpthread -o $@
+	@$(CXX) $(CXXSTD) $(OPT) $< -L$(BUILD) -l$(PROJECT) -lpthread -static -o $@
 
 # --- unit tests -----------------------------------------------------------
 tests test: $(TEST_BIN)
@@ -69,11 +69,15 @@ $(TEST_BIN): $(TEST_OBJS) $(LIB) | $(BINDIR)
 
 # --- benchmark ------------------------------------------------------------
 bench: $(BENCH_BIN)
+	@./$(BENCH_BIN)
 
-$(BENCH_BIN): tests/benchmark.o $(LIB) | $(BINDIR)
+$(BENCH_BIN): $(OBJDIR)/benchmark.o $(LIB) | $(BINDIR)
 	@echo "[LINK]    $@"
 	@$(CXX) $(CXXSTD) $(OPT) $^ -L$(BUILD) -l$(PROJECT) -lpthread -o $@
-	@./$(BENCH_BIN)
+
+$(OBJDIR)/benchmark.o: bench/benchmark.cpp | $(OBJDIR)
+	@echo "[CXX]     $<"
+	@$(CXX) $(CXXSTD) $(WARN) $(OPT) $(CPPFLAGS) -c $< -o $@
 
 # --- generic compile rule -------------------------------------------------
 $(OBJDIR)/%.o: src/%.cpp | $(OBJDIR)
@@ -84,12 +88,16 @@ $(OBJDIR)/cli/%.o: src/cli/%.cpp | $(OBJDIR)/cli
 	@echo "[CXX]     $<"
 	@$(CXX) $(CXXSTD) $(WARN) $(OPT) $(CPPFLAGS) -c $< -o $@
 
+$(OBJDIR)/languages/%.o: src/languages/%.cpp | $(OBJDIR)/languages
+	@echo "[CXX]     $<"
+	@$(CXX) $(CXXSTD) $(WARN) $(OPT) $(CPPFLAGS) -c $< -o $@
+
 $(TESTDIR)/%.o: tests/%.cpp | $(TESTDIR)
 	@echo "[CXX]     $<"
 	@$(CXX) $(CXXSTD) $(WARN) $(OPT) $(CPPFLAGS) -c $< -o $@
 
 # --- directories ----------------------------------------------------------
-$(BUILD) $(BINDIR) $(OBJDIR) $(OBJDIR)/cli $(TESTDIR):
+$(BUILD) $(BINDIR) $(OBJDIR) $(OBJDIR)/cli $(OBJDIR)/languages $(TESTDIR):
 	@mkdir -p $@
 
 # --- housekeeping ---------------------------------------------------------

@@ -20,7 +20,8 @@ namespace
 {
 
 constexpr std::string_view kSupportedExtensions[] = {
-    ".cpp", ".cc", ".cxx", ".h", ".hpp"
+    ".cpp", ".cc", ".cxx", ".h", ".hpp",
+    ".java", ".py", ".js", ".ts", ".c"
 };
 
 // Walk the directory tree, pruning ignored subtrees, appending matching files.
@@ -133,7 +134,7 @@ std::vector<DiscoveredFile> discover_sources(const std::string& root,
         }
         else
         {
-            throw std::runtime_error("'" + root + "' is not a C++ source file");
+            throw std::runtime_error("'" + root + "' is not a supported source file");
         }
     }
     else

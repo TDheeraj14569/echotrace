@@ -1,0 +1,37 @@
+.source-compare {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.source-pane {
+  flex: 1;
+  background-color: #0d1117;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.source-pane h4 {
+  font-family: 'Inter', sans-serif;
+  padding: 0.5rem 1rem;
+  background-color: #161b22;
+  border-bottom: 1px solid var(--border-color);
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.source-pane pre {
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin: 0;
+  color: #e6edf3;
+}
+.source-pane h4::before {
+  content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+  background: #fa5c5c; box-shadow: 20px 0 0 #fdbc40, 40px 0 0 #33c948; margin-right: 50px;
+}

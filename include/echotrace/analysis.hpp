@@ -39,6 +39,8 @@ struct AnalysisSummary
     normalization::NormalizationStats normalization{};
 };
 
+enum class ComparisonMode { Exhaustive, Indexed };
+
 /// Tunables for an analysis run.
 struct AnalysisOptions
 {
@@ -57,6 +59,9 @@ struct AnalysisOptions
 
     /// Normalisation passes applied during parsing.
     normalization::NormalizationOptions normalization{};
+
+    ComparisonMode mode = ComparisonMode::Exhaustive;
+    std::size_t min_shared_for_candidate = 1;
 };
 
 /// Full result of an analysis run.
@@ -79,6 +84,12 @@ struct AnalysisResult
 /// [threads] == 1 runs sequentially with no thread-pool overhead.
 std::vector<Match> compare_all(const std::vector<ParsedSource>& sources,
                                std::size_t threads);
+
+/// Indexed comparison: only compare candidate pairs
+std::vector<Match> compare_indexed(
+    const std::vector<ParsedSource>& sources,
+    std::size_t threads,
+    std::size_t min_shared = 1);
 
 /// Analyse an already-parsed set of sources: compare, summarise, sort and
 /// filter according to [options]. Parsing must already be complete.

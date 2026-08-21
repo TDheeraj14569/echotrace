@@ -6,4 +6,21 @@ obj/
 # Generated reports
 *.html
 *.csv
-*.json
+
+# Dependencies
+node_modules/
+
+# Web artifacts
+web/backend/uploads/
+web/backend/data/
+web/frontend/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
