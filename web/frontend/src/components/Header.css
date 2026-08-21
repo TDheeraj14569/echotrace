@@ -3,14 +3,17 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: rgba(17, 17, 17, 0.7);`n  backdrop-filter: blur(10px);
+  background-color: rgba(17, 17, 17, 0.7);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
 }
 
 .header-brand h1 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: transparent;`n  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);`n  -webkit-background-clip: text;
+  color: transparent;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
   letter-spacing: -0.5px;
 }
 
@@ -30,11 +33,16 @@
 }
 
 .header-nav button:hover {
-  color: transparent;`n  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);`n  -webkit-background-clip: text;
+  color: transparent;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
   background-color: rgba(177, 186, 196, 0.12);
 }
 
 .header-nav button.active {
-  color: transparent;`n  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);`n  -webkit-background-clip: text;
+  color: transparent;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
   background-color: rgba(177, 186, 196, 0.12);
 }
+
