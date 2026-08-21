@@ -17,8 +17,8 @@ export interface JobStatus {
 }
 
 export interface FileMatch {
-  file1: string;
-  file2: string;
+  file_a: string;
+  file_b: string;
   similarity: number;
   fragments?: any[];
 }
@@ -26,12 +26,14 @@ export interface FileMatch {
 export interface AnalysisResult {
   jobId: string;
   status: string;
-  stats: {
-    filesAnalyzed: number;
-    comparisonsMade: number;
-    highestSimilarity: number;
-    avgSimilarity: number;
-    durationMs: number;
+  fileCount?: number;
+  durationMs?: number;
+  duration_ms?: number;
+  summary?: {
+    files?: number;
+    comparisons?: number;
+    highest_similarity?: number;
+    average_similarity?: number;
   };
   matches: FileMatch[];
 }
