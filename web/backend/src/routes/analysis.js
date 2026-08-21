@@ -7,7 +7,15 @@ const db = require('../db');
 const router = express.Router();
 
 // Resolve echotrace CLI binary
-const ENGINE_PATH = path.resolve(__dirname, '..', '..', '..', '..', 'build', 'bin', 'echotrace.exe');
+const ENGINE_PATH_LOCAL = path.resolve(__dirname, '..', '..', '..', '..', 'build', 'bin', 'echotrace.exe');
+const ENGINE_PATH_DOCKER = '/usr/local/bin/echotrace';
+
+let ENGINE_PATH = 'echotrace';
+if (fs.existsSync(ENGINE_PATH_DOCKER)) {
+    ENGINE_PATH = ENGINE_PATH_DOCKER;
+} else if (fs.existsSync(ENGINE_PATH_LOCAL)) {
+    ENGINE_PATH = ENGINE_PATH_LOCAL;
+}
 
 // POST /api/analysis/:jobId/start - Start analysis for a job
 router.post('/:jobId/start', async (req, res) => {
@@ -113,3 +121,4 @@ router.get('/:jobId/status', (req, res) => {
 });
 
 module.exports = router;
+
