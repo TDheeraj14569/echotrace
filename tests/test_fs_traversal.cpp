@@ -3,14 +3,23 @@
 #include <stdexcept>
 
 TEST(FsTraversalSupportedExtension) {
+    // C/C++ extensions
     ASSERT_TRUE(echotrace::fs::has_supported_extension("main.cpp"));
     ASSERT_TRUE(echotrace::fs::has_supported_extension("header.hpp"));
     ASSERT_TRUE(echotrace::fs::has_supported_extension("code.cc"));
     ASSERT_TRUE(echotrace::fs::has_supported_extension("file.cxx"));
     ASSERT_TRUE(echotrace::fs::has_supported_extension("header.h"));
-    ASSERT_FALSE(echotrace::fs::has_supported_extension("script.py"));
+    ASSERT_TRUE(echotrace::fs::has_supported_extension("plain.c"));
+    // Multi-language extensions added in v1.0
+    ASSERT_TRUE(echotrace::fs::has_supported_extension("script.py"));
+    ASSERT_TRUE(echotrace::fs::has_supported_extension("Main.java"));
+    ASSERT_TRUE(echotrace::fs::has_supported_extension("app.js"));
+    ASSERT_TRUE(echotrace::fs::has_supported_extension("index.ts"));
+    // Non-source files must be rejected
     ASSERT_FALSE(echotrace::fs::has_supported_extension("data.txt"));
     ASSERT_FALSE(echotrace::fs::has_supported_extension("readme.md"));
+    ASSERT_FALSE(echotrace::fs::has_supported_extension("image.png"));
+    ASSERT_FALSE(echotrace::fs::has_supported_extension("Makefile"));
 }
 
 TEST(FsTraversalCaseInsensitive) {

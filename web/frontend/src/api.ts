@@ -7,7 +7,11 @@ export async function uploadFiles(files: File[], config: AnalysisConfig): Promis
   files.forEach(file => formData.append('files', file));
   if (config.k) formData.append('k', config.k.toString());
   if (config.window) formData.append('window', config.window.toString());
-  if (config.threshold !== undefined) formData.append('threshold', (config.threshold * 100).toString());
+  // The slider stores threshold as 0.0–1.0; the CLI expects 0–100 (percent).
+  if (config.threshold !== undefined) {
+    const pct = Math.round(config.threshold * 100);
+    formData.append('threshold', pct.toString());
+  }
   if (config.threads) formData.append('threads', config.threads.toString());
   if (config.format) formData.append('format', config.format);
 

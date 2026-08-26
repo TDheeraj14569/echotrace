@@ -67,7 +67,9 @@ router.post('/', upload.array('files', 100), (req, res) => {
     const config = {
         k: parseInt(req.body.k) || 5,
         window: parseInt(req.body.window) || 4,
-        threshold: parseFloat(req.body.threshold) || 0,
+        // Threshold arrives as a 0–100 percentage (frontend already converts).
+        // Clamp to valid range as a safety net for the CLI's --threshold flag.
+        threshold: Math.max(0, Math.min(100, parseFloat(req.body.threshold) || 0)),
         threads: parseInt(req.body.threads) || 0,
         format: req.body.format || 'json'
     };
