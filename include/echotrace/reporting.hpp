@@ -4,6 +4,7 @@
 #include "echotrace/analysis.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 namespace echotrace
@@ -52,20 +53,20 @@ std::string render_csv(const AnalysisResult& result, const ReportMeta& meta);
 /// top [fragment_limit] matches) matched fragments.
 std::string render_json(const AnalysisResult& result,
                         const ReportMeta& meta,
-                        std::size_t fragment_limit = 10);
+                        std::size_t fragment_limit = SIZE_MAX);
 
 /// Self-contained HTML report (inline CSS, no external resources) with the
 /// summary, ranked matches and matched-fragment snippets for the top
 /// [fragment_limit] matches.
 std::string render_html(const AnalysisResult& result,
                         const ReportMeta& meta,
-                        std::size_t fragment_limit = 10);
+                        std::size_t fragment_limit = SIZE_MAX);
 
 /// Dispatch to the renderer for [format].
 std::string render(const AnalysisResult& result,
                    const ReportMeta& meta,
                    ReportFormat format,
-                   std::size_t fragment_limit = 10);
+                   std::size_t fragment_limit = SIZE_MAX);
 
 } // namespace reporting
 
