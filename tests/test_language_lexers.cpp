@@ -6,11 +6,11 @@
 TEST(CppLexerBasic) {
     const auto& lexer = echotrace::lex::get_lexer(echotrace::Language::Cpp);
     auto tokens = lexer.tokenize_spans("int main() { // comment\n return 0; } /* block */");
-    // Should skip comments
-    ASSERT_EQ(tokens.size(), 7u); // int, main, (, ), {, return, 0, }
-    ASSERT_EQ(tokens[0].text, "int");
-    ASSERT_EQ(tokens[1].text, "main");
-    ASSERT_EQ(tokens[6].text, "}");
+    // T(int), V(main), (, ), {, return, N(0), ;, }
+    ASSERT_EQ(tokens.size(), 9u);
+    ASSERT_EQ(tokens[0].text, "T");
+    ASSERT_EQ(tokens[1].text, "V");
+    ASSERT_EQ(tokens[8].text, "}");
 }
 
 TEST(PythonLexerBasic) {
