@@ -7,6 +7,8 @@
 #include "echotrace/analysis.hpp"
 #include "echotrace/document.hpp"
 #include "echotrace/normalization.hpp"
+#include "echotrace/text.hpp"
+#include "echotrace/language.hpp"
 #include "echotrace/reporting.hpp"
 #include "echotrace/similarity.hpp"
 #include "echotrace/text.hpp"
@@ -402,8 +404,10 @@ void run_two_file_compare(const Cli& cli)
     const auto rhs = echotrace::io::read_file(cli.paths[1]);
 
     const auto opts = norm_options(cli);
-    const auto left = echotrace::parse_source(lhs, cli.k, cli.window, opts);
-    const auto right = echotrace::parse_source(rhs, cli.k, cli.window, opts);
+    const auto lang_left = echotrace::detect_language(cli.paths[0]);
+    const auto lang_right = echotrace::detect_language(cli.paths[1]);
+    const auto left = echotrace::parse_source(lhs, lang_left, cli.k, cli.window, opts);
+    const auto right = echotrace::parse_source(rhs, lang_right, cli.k, cli.window, opts);
     const auto score = echotrace::sim::jaccard(left.fingerprint, right.fingerprint);
 
     std::cout << "EchoTrace file comparison\n";
