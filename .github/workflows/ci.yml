@@ -20,19 +20,15 @@ jobs:
 
     - name: Build library and CLI
       run: make cli
-      working-directory: echotrace
 
     - name: Run self-test
       run: ./build/bin/echotrace --self-test
-      working-directory: echotrace
 
     - name: Build and run unit tests
       run: make test
-      working-directory: echotrace
 
     - name: Build and run benchmarks
       run: make bench
-      working-directory: echotrace
 
   web-backend:
     runs-on: ubuntu-latest
@@ -46,15 +42,15 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
-        cache-dependency-path: echotrace/web/backend/package-lock.json
+        cache-dependency-path: web/backend/package-lock.json
 
     - name: Install backend dependencies
       run: npm ci
-      working-directory: echotrace/web/backend
+      working-directory: web/backend
 
     - name: Run backend tests
       run: npm test
-      working-directory: echotrace/web/backend
+      working-directory: web/backend
 
   web-frontend:
     runs-on: ubuntu-latest
@@ -67,12 +63,12 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
-        cache-dependency-path: echotrace/web/frontend/package-lock.json
+        cache-dependency-path: web/frontend/package-lock.json
 
     - name: Install frontend dependencies
       run: npm ci
-      working-directory: echotrace/web/frontend
+      working-directory: web/frontend
 
     - name: Build frontend
       run: npm run build
-      working-directory: echotrace/web/frontend
+      working-directory: web/frontend
