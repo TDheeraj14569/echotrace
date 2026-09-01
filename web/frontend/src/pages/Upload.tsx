@@ -34,7 +34,7 @@ export default function Upload({ onAnalysisStarted }: UploadProps) {
     setError(null);
     try {
       const res = await uploadFiles(files, config);
-      const jobId = (res as any).id;
+      const jobId = res.id;
       await startAnalysis(jobId);
       onAnalysisStarted(jobId);
     } catch (err: any) {

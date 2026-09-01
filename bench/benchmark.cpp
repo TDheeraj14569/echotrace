@@ -123,7 +123,7 @@ void run_benchmark(std::size_t n_files, std::size_t lines_per_file, std::size_t 
     sources.reserve(n_files);
     for (std::size_t i = 0; i < n_files; ++i)
     {
-        auto parsed = echotrace::parse_source(raw_sources[i], 5, 4, opts);
+        auto parsed = echotrace::parse_source(raw_sources[i], echotrace::Language::Cpp, 5, 4, opts);
         parsed.path = "file_" + std::to_string(i) + ".cpp";
         sources.push_back(std::move(parsed));
     }

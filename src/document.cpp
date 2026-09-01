@@ -3,6 +3,7 @@
 #include "echotrace/fingerprint.hpp"
 #include "echotrace/hash.hpp"
 #include "echotrace/lexer.hpp"
+#include "echotrace/language_lexer.hpp"
 #include "echotrace/normalization.hpp"
 
 #include <utility>
@@ -20,14 +21,17 @@ DocumentProfile to_profile(const ParsedSource& src)
 }
 
 ParsedSource parse_source(std::string_view src,
+                          Language lang,
                           std::size_t k,
                           std::size_t window,
                           const normalization::NormalizationOptions& opts)
 {
     ParsedSource out;
     out.source = std::string(src);
+    out.language = lang;
 
-    auto spans = lex::tokenize_spans(src);
+    const auto& lexer = lex::get_lexer(lang);
+    auto spans = lexer.tokenize_spans(src);
 
     // Project to text, compute the survivor mask once, then apply it to both
     // the text and span vectors so they stay perfectly aligned.

@@ -25,3 +25,17 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Ad-hoc test files
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.node.json
+*.txt
+*.log
+test_20_files/
+live_res.txt
+live_upload.json
+test_output.json
+css_events.jsonl

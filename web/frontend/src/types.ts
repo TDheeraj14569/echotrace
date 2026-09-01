@@ -7,13 +7,15 @@ export interface AnalysisConfig {
 }
 
 export interface JobResponse {
-  jobId: string;
-  message: string;
+  id: string;
+  status: string;
+  fileCount: number;
+  config?: AnalysisConfig;
 }
 
 export interface JobStatus {
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress: number;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  error?: string;
 }
 
 export interface FileMatch {

@@ -1,11 +1,14 @@
 #include "echotrace/analysis.hpp"
 
+#include "echotrace/fs_traversal.hpp"
+#include "echotrace/language.hpp"
 #include "echotrace/similarity.hpp"
 #include "echotrace/text.hpp"
 #include "echotrace/thread_pool.hpp"
 #include "echotrace/indexing.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <future>
 #include <numeric>
 #include <stdexcept>
@@ -73,22 +76,29 @@ std::vector<Match> compare_all(const std::vector<ParsedSource>& sources,
         return matches;
     }
 
-    // Parallel path. Each task writes to its OWN slot (matches[t]); since every
-    // task owns a distinct index, there is no shared mutable state and no lock.
-    // Sources are read-only and therefore safe to share across workers.
+    // Parallel path. We submit exactly [workers] tasks.
+    // Each worker claims the next available pair atomically until all are done.
     ThreadPool pool(workers);
     std::vector<std::future<void>> futures;
-    futures.reserve(total);
+    futures.reserve(workers);
 
-    for (std::size_t t = 0; t < total; ++t)
+    std::atomic<std::size_t> current_task{0};
+
+    for (std::size_t w = 0; w < workers; ++w)
     {
-        const auto i = pairs[t].first;
-        const auto j = pairs[t].second;
         futures.push_back(pool.submit(
-            [&sources, &matches, t, i, j]()
+            [&sources, &matches, &pairs, &current_task, total]()
             {
-                const auto d = sim::jaccard_detail(sources[i].fingerprint, sources[j].fingerprint);
-                matches[t] = Match{i, j, d.percent, d.intersection};
+                while (true)
+                {
+                    std::size_t t = current_task.fetch_add(1, std::memory_order_relaxed);
+                    if (t >= total) break;
+
+                    const auto i = pairs[t].first;
+                    const auto j = pairs[t].second;
+                    const auto d = sim::jaccard_detail(sources[i].fingerprint, sources[j].fingerprint);
+                    matches[t] = Match{i, j, d.percent, d.intersection};
+                }
             }));
     }
 
@@ -257,7 +267,8 @@ AnalysisResult analyze_directory(const std::string& root,
             warnings.push_back(std::string("skipped '") + f.display + "': " + ex.what());
             continue;
         }
-        auto parsed = parse_source(content, options.k, options.window, options.normalization);
+        Language lang = detect_language(f.path);
+        auto parsed = parse_source(content, lang, options.k, options.window, options.normalization);
         parsed.path = f.display;
         sources.push_back(std::move(parsed));
     }

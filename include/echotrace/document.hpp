@@ -1,6 +1,7 @@
 #ifndef ECHOTRACE_DOCUMENT_HPP
 #define ECHOTRACE_DOCUMENT_HPP
 
+#include "echotrace/language.hpp"
 #include "echotrace/lexer.hpp"
 #include "echotrace/normalization.hpp"
 
@@ -24,6 +25,9 @@ struct ParsedSource
 {
     /// Display path (relative to the scanned root where possible).
     std::string path;
+
+    /// The detected programming language of this source.
+    Language language = Language::Unknown;
 
     /// Original source text, retained for matched-fragment highlighting.
     std::string source;
@@ -72,6 +76,7 @@ DocumentProfile to_profile(const ParsedSource& src);
 /// Pipeline: tokenize -> normalise -> rolling-hash(k) -> winnow(window).
 /// Complexity: O(src.size()) amortised.
 ParsedSource parse_source(std::string_view src,
+                          Language lang,
                           std::size_t k,
                           std::size_t window,
                           const normalization::NormalizationOptions& opts);

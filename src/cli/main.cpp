@@ -40,6 +40,7 @@ struct Cli
     std::size_t threads = 0;        // 0 == auto
     double threshold = 0.0;         // percent
     std::size_t top_n = 0;          // 0 == all
+    echotrace::analysis::ComparisonMode mode = echotrace::analysis::ComparisonMode::Indexed;
     bool no_normalize = false;
     std::string format = "text";
     std::string output;             // empty == stdout
@@ -177,6 +178,13 @@ Cli parse_args(int argc, char* argv[])
         else if (starts_with(arg, "--top="))
         {
             cli.top_n = parse_size(arg.substr(6), "--top");
+        }
+        else if (arg == "--mode")
+        {
+            auto val = take_next(arg);
+            if (val == "exhaustive") cli.mode = echotrace::analysis::ComparisonMode::Exhaustive;
+            else if (val == "indexed") cli.mode = echotrace::analysis::ComparisonMode::Indexed;
+            else throw std::invalid_argument("unknown mode: " + str(val));
         }
         else if (arg == "--format")
         {

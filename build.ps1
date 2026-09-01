@@ -31,8 +31,8 @@ if (-not $gpp) {
 }
 
 $GXX = if ($gpp -is [System.Management.Automation.ApplicationInfo]) { $gpp.Source } else { $gpp.FullName }
-$AR = ($GXX -replace 'g\+\+', 'ar')
-if (-not (Test-Path $AR)) { $AR = "ar" }
+$AR = ($GXX -replace 'g\+\+', 'llvm-ar')
+if (-not (Test-Path $AR)) { $AR = "llvm-ar" }
 
 Write-Host "Using: $GXX" -ForegroundColor Cyan
 & $GXX --version | Select-Object -First 1

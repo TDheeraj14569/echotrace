@@ -9,9 +9,9 @@
 static echotrace::analysis::AnalysisResult make_test_result() {
     echotrace::normalization::NormalizationOptions nopts{};
     std::vector<echotrace::ParsedSource> sources;
-    sources.push_back(echotrace::parse_source("int x = 1; return x;", 5, 4, nopts));
+    sources.push_back(echotrace::parse_source("int x = 1; return x;", echotrace::Language::Cpp, 5, 4, nopts));
     sources[0].path = "file_a.cpp";
-    sources.push_back(echotrace::parse_source("int y = 2; return y;", 5, 4, nopts));
+    sources.push_back(echotrace::parse_source("int y = 2; return y;", echotrace::Language::Cpp, 5, 4, nopts));
     sources[1].path = "file_b.cpp";
 
     echotrace::analysis::AnalysisOptions opts;

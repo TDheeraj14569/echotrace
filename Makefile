@@ -110,4 +110,5 @@ tidy:
 run-help: cli
 	@./$(CLI_BIN) --help
 
--include $(shell find $(BUILD) -name '*.d' 2>/dev/null)
+ALL_OBJS := $(LIB_OBJS) $(CLI_OBJ) $(TEST_OBJS) $(OBJDIR)/benchmark.o
+-include $(ALL_OBJS:.o=.d)

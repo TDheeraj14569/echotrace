@@ -51,8 +51,10 @@ if (fs.existsSync(frontendBuild)) {
 // Initialize database and start server
 db.initialize();
 
-app.listen(PORT, () => {
-    console.log(`EchoTrace backend running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`EchoTrace backend running on http://localhost:${PORT}`);
+    });
+}
 
 module.exports = app;

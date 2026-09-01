@@ -98,7 +98,7 @@ public:
                 if (two == "==" || two == "!=" || two == ">=" || two == "<=" || two == "&&" || two == "||" || two == "++" || two == "--" || two == "+=" || two == "-=" || two == "*=" || two == "/=" || two == "%=" || two == "&=" || two == "|=" || two == "^=" || two == "<<" || two == ">>" || two == "=>" || two == "?." || two == "??" || two == "**") {
                     if (i + 2 < n) {
                         std::string_view three = src.substr(i, 3);
-                        if (three == "===" || three == "!==" || three == "<<=" || three == ">>=" || three == ">>>" || three == "??=" || three == "**=" || three == "...") {
+                        if (three == "===" || three == "!==" || three == "<<=" || three == ">>=" || three == ">>>" || three == "?\\?=" || three == "**=" || three == "...") {
                             if (i + 3 < n && src.substr(i, 4) == ">>>=") {
                                 tokens.push_back({std::string(src.substr(i, 4)), start, 4});
                                 i += 4;
